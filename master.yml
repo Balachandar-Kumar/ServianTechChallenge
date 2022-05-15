@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: Master file to invoke VirtualPrivateCloud.yml, ECS-Fargate.yml files to Deploy techchallengeapp in ECS Fargate instance.
+Resources:
+  VPC:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://cloud-formation-templates-references.s3.ap-southeast-2.amazonaws.com/VirtualPrivateCloud.yml
+      Parameters:
+        infraName: !Ref AWS::StackName
+        vpcCIDR: 10.0.0.0/16
+        priSubCIDR1: 10.0.1.0/24
+        priSubCIDR2: 10.0.2.0/24
+        pubSubCIDR1: 10.0.3.0/24
+        pubSubCIDR2: 10.0.4.0/24
+ 
+  ECS:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://cloud-formation-templates-references.s3.ap-southeast-2.amazonaws.com/ECS-Fargate.yml
+      Parameters:
+        VPC: !GetAtt VPC.Outputs.VPC        
+        Subnets: !GetAtt VPC.Outputs.PrivateSubnets
+        Image: servian/techchallengeapp
+        sName: !Ref AWS::StackName
+        ContainerPort: 80        
+        HealthCheckPath: /healthcheck/
+        dCount: 2
+        MinContainers: 2
+        MaxContainers: 4
+        AutoScalingTargetValue: 50
